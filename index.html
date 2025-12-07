@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小学语文生字配对游戏</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+
+
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#E74C3C', // 红色代表拼音
+                        secondary: '#3498DB', // 蓝色代表汉字
+                        success: '#2ECC71',
+                        danger: '#E74C3C',
+                        light: '#F8F9FA',
+                        dark: '#343A40'
+                    },
+                    fontFamily: {
+                        sans: ['Arial', 'sans-serif'],
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'disappear': 'disappear 0.5s forwards',
+                        'shake': 'shake 0.3s ease-in-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        disappear: {
+                            '0%': { opacity: '1', transform: 'scale(1)' },
+                            '50%': { opacity: '0.5', transform: 'scale(1.1)' },
+                            '100%': { opacity: '0', transform: 'scale(0)' },
+                        },
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-5px)' },
+                            '50%': { transform: 'translateX(5px)' },
+                            '75%': { transform: 'translateX(-5px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .word-bubble {
+                @apply rounded-full p-4 shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-105;
+            }
+            .word-bubble-pinyin {
+                @apply bg-red-100 text-primary border-2 border-primary;
+            }
+            .word-bubble-character {
+                @apply bg-blue-100 text-secondary border-2 border-secondary;
+            }
+            .word-bubble-selected {
+                @apply ring-4 ring-yellow-400 ring-opacity-75;
+            }
+            .game-area {
+                @apply relative h-96 overflow-hidden rounded-xl border-4 border-primary bg-red-50;
+            }
+            .character-area {
+                @apply relative h-96 overflow-hidden rounded-xl border-4 border-secondary bg-blue-50;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-primary text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-book text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold">小学语文生字配对游戏</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="soundToggleBtn" class="p-2 rounded-full hover:bg-red-700 transition">
+                    <i class="fa fa-volume-up text-xl"></i>
+                </button>
+            <div class="hidden md:flex space-x-4">
+
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- 游戏设置区 -->
+        <section class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- 年级选择 -->
+                <div class="flex-1">
+                    <label for="gradeSelect" class="block text-sm font-medium text-gray-700 mb-1">选择年级</label>
+                    <select id="gradeSelect" class="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="1A">一年级上册</option>
+                        <option value="1B">一年级下册</option>
+                        <option value="2A">二年级上册</option>
+                        <option value="2B">二年级下册</option>
+                        <option value="3A">三年级上册</option>
+                        <option value="3B">三年级下册</option>
+                        <option value="4A">四年级上册</option>
+                        <option value="4B">四年级下册</option>
+                        <option value="5A">五年级上册</option>
+                        <option value="5B">五年级下册</option>
+                        <option value="6A">六年级上册</option>
+                        <option value="6B">六年级下册</option>
+                    </select>
+                </div>
+                
+                <!-- 单元选择 -->
+                <div class="flex-1">
+                    <label for="unitSelect" class="block text-sm font-medium text-gray-700 mb-1">选择单元</label>
+                    <select id="unitSelect" class="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="1">第一单元</option>
+                        <option value="2">第二单元</option>
+                        <option value="3">第三单元</option>
+                        <option value="4">第四单元</option>
+                        <option value="5">第五单元</option>
+                        <option value="6">第六单元</option>
+                    </select>
+                </div>
+                
+                <!-- 自定义单词按钮 -->
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">自定义生字</label>
+                    <div class="flex gap-2">
+                        <button id="customWordsBtn" class="flex-1 px-3 py-2 bg-secondary text-white rounded-md hover:bg-blue-600 transition">
+                            <i class="fa fa-plus-circle mr-1"></i>添加
+                        </button>
+                        <button id="toggleCustomWordsBtn" class="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
+                            <i class="fa fa-toggle-off mr-1"></i>禁用
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 开始游戏按钮 -->
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">开始游戏</label>
+                    <button id="startGameBtn" class="w-full md:w-auto px-3 py-2 bg-success text-white rounded-md hover:bg-green-600 transition">
+                        <i class="fa fa-play-circle mr-1"></i>开始游戏
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 游戏区域 -->
+        <section class="flex flex-col md:flex-row gap-6">
+            <!-- 拼音区域 -->
+            <div class="w-full md:w-1/2">
+                <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-lg font-bold text-primary">拼音区域</h2>
+                        <div class="bg-red-100 text-primary px-3 py-1 rounded-full text-sm font-semibold">
+                            <i class="fa fa-clock-o mr-1"></i><span id="gameTimer">00:00</span>
+                        </div>
+                    </div>
+                    <div id="pinyinArea" class="game-area"></div>
+                </div>
+            </div>
+            
+            <!-- 汉字区域 -->
+            <div class="w-full md:w-1/2">
+                <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-lg font-bold text-secondary">汉字区域</h2>
+                        <div class="bg-blue-100 text-secondary px-3 py-1 rounded-full text-sm font-semibold">
+                            <i class="fa fa-times-circle mr-1"></i><span id="errorCount">0</span>
+                        </div>
+                    </div>
+                    <div id="characterArea" class="character-area"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 成绩统计区 - 隐藏 -->
+        <section id="scoreSection" class="hidden bg-white rounded-xl shadow-md p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
+                <i class="fa fa-trophy mr-2 text-yellow-500"></i>成绩统计
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 错误次数 -->
+                <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <h3 class="text-lg font-semibold text-danger mb-2 flex items-center">
+                        <i class="fa fa-times-circle mr-2"></i>错误次数
+                    </h3>
+                    <p id="finalErrorCount" class="text-4xl font-bold text-center text-danger">0</p>
+                </div>
+                
+                <!-- 完成时间 -->
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 class="text-lg font-semibold text-primary mb-2 flex items-center">
+                        <i class="fa fa-clock-o mr-2"></i>完成时间
+                    </h3>
+                    <p id="finalCompletionTime" class="text-4xl font-bold text-center text-primary">00:00</p>
+                </div>
+                
+                <!-- 正确率 -->
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 class="text-lg font-semibold text-success mb-2 flex items-center">
+                        <i class="fa fa-check-circle mr-2"></i>正确率
+                    </h3>
+                    <p id="finalAccuracyRate" class="text-4xl font-bold text-center text-success">0%</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>小学语文生字配对游戏 &copy; 2025</p>
+            <p class="text-sm mt-1 text-gray-400">专为小学生语文学习设计</p>
+        </div>
+    </footer>
+
+    <!-- 自定义单词模态框 -->
+    <div id="customWordsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">添加自定义生字</h2>
+                <button id="closeCustomWordsModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">请输入拼音和对应的汉字，用空格分隔，每行一个生字。</p>
+                <p class="text-sm text-gray-500">例如：tiān 天</p>
+            </div>
+            <textarea id="customWordsTextarea" class="w-full h-40 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="请输入自定义生字..."></textarea>
+            <div class="flex justify-between mt-4">
+                <button id="resetCustomWords" class="px-4 py-2 bg-danger text-white rounded-md hover:bg-red-600 transition">
+                    <i class="fa fa-trash mr-1"></i>重置
+                </button>
+                <button id="saveCustomWords" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-red-600 transition">
+                    <i class="fa fa-save mr-1"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">游戏帮助</h2>
+                <button id="closeHelpModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-semibold text-primary mb-2">游戏规则</h3>
+                    <p>1. 选择年级和单元，或者添加自定义生字</p>
+                    <p>2. 点击"开始游戏"按钮</p>
+                    <p>3. 左侧区域显示拼音气泡，右侧区域显示汉字气泡</p>
+                    <p>4. 先点击一个拼音，再点击对应的汉字进行配对</p>
+                    <p>5. 如果配对正确，两个气泡会消失</p>
+                    <p>6. 如果配对错误，会记录错误次数并震动提示</p>
+                    <p>7. 完成所有生字配对后，会显示游戏成绩</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-secondary mb-2">得分说明</h3>
+                    <p>- 错误次数越少，得分越高</p>
+                    <p>- 完成时间越短，得分越高</p>
+                    <p>- 正确率越高，得分越高</p>
+                    <p>- 根据你的表现，游戏会给出不同的评价</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-600 mb-2">自定义生字功能</h3>
+                    <p>1. 点击"添加"按钮可以打开自定义生字编辑窗口</p>
+                    <p>2. 按照"拼音 汉字"的格式输入生字，每行一个</p>
+                    <p>3. 点击"保存"按钮保存自定义生字</p>
+                    <p>4. 点击"重置"按钮可以清除所有自定义生字</p>
+                    <p>5. 使用"启用/禁用"切换按钮选择是否使用自定义生字</p>
+                    <p>6. 绿色表示启用自定义生字，灰色表示使用教材生字</p>
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="closeHelpBtn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-red-600 transition">
+                    我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏完成模态框 -->
+    <div id="gameCompleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">游戏结束！</h2>
+                <button id="closeGameCompleteModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="text-center py-4">
+                <div class="inline-block p-4 bg-yellow-100 rounded-full mb-4">
+                    <i class="fa fa-trophy text-5xl text-yellow-500"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">恭喜完成！</h3>
+                
+                <!-- 成绩展示 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h4 class="text-lg font-semibold text-primary mb-2">完成时间</h4>
+                        <p id="resultTime" class="text-3xl font-bold text-center text-primary">00:00</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <h4 class="text-lg font-semibold text-danger mb-2">错误次数</h4>
+                        <p id="resultErrors" class="text-3xl font-bold text-center text-danger">0</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h4 class="text-lg font-semibold text-success mb-2">正确率</h4>
+                        <p id="resultAccuracy" class="text-3xl font-bold text-center text-success">0%</p>
+                    </div>
+                </div>
+                
+                <!-- 评价 -->
+                <div class="mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200">
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">
+                        <i class="fa fa-star text-yellow-500 mr-2"></i>
+                        <span id="gameRating">太棒了！</span>
+                    </h4>
+                    <p class="text-gray-600" id="gameComment">你是生字配对高手！继续保持！</p>
+                </div>
+                
+                <div class="flex justify-center space-x-4">
+                    <button id="playAgainBtn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-red-600 transition">
+                        <i class="fa fa-refresh mr-1"></i>再玩一次
+                    </button>
+                    <button id="newGameBtn" class="px-4 py-2 bg-secondary text-white rounded-md hover:bg-blue-600 transition">
+                        <i class="fa fa-play mr-1"></i>选择新生字
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+
+
+        // 部编版小学语文生字数据
+        const characterData = {
+            "1A": { // 一年级上册
+                "1": [ // 第一单元
+                    { pinyin: "tiān", character: "天" },
+                    { pinyin: "dì", character: "地" },
+                    { pinyin: "rén", character: "人" },
+                    { pinyin: "nǐ", character: "你" },
+                    { pinyin: "wǒ", character: "我" },
+                    { pinyin: "tā", character: "他" },
+                    { pinyin: "yī", character: "一" },
+                    { pinyin: "èr", character: "二" },
+                    { pinyin: "sān", character: "三" },
+                    { pinyin: "shàng", character: "上" },
+                    { pinyin: "xià", character: "下" },
+                    { pinyin: "kǒu", character: "口" },
+                    { pinyin: "ěr", character: "耳" },
+                    { pinyin: "mù", character: "目" },
+                    { pinyin: "shǒu", character: "手" },
+                    { pinyin: "zú", character: "足" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "bà", character: "爸" },
+                    { pinyin: "mā", character: "妈" },
+                    { pinyin: "mǎ", character: "马" },
+                    { pinyin: "tǔ", character: "土" },
+                    { pinyin: "bù", character: "不" },
+                    { pinyin: "huà", character: "画" },
+                    { pinyin: "dǎ", character: "打" },
+                    { pinyin: "qí", character: "棋" },
+                    { pinyin: "jī", character: "鸡" },
+                    { pinyin: "zì", character: "字" },
+                    { pinyin: "cí", character: "词" },
+                    { pinyin: "yǔ", character: "语" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "qiū", character: "秋" },
+                    { pinyin: "qì", character: "气" },
+                    { pinyin: "le", character: "了" },
+                    { pinyin: "shù", character: "树" },
+                    { pinyin: "yè", character: "叶" },
+                    { pinyin: "piàn", character: "片" },
+                    { pinyin: "dà", character: "大" },
+                    { pinyin: "fēi", character: "飞" },
+                    { pinyin: "huì", character: "会" },
+                    { pinyin: "gè", character: "个" },
+                    { pinyin: "jiā", character: "家" },
+                    { pinyin: "wán", character: "玩" }
+                ]
+            },
+            "1B": { // 一年级下册
+                "1": [ // 第一单元
+                    { pinyin: "chūn", character: "春" },
+                    { pinyin: "xià", character: "夏" },
+                    { pinyin: "qiū", character: "秋" },
+                    { pinyin: "dōng", character: "冬" },
+                    { pinyin: "fēng", character: "风" },
+                    { pinyin: "yǔ", character: "雨" },
+                    { pinyin: "xuě", character: "雪" },
+                    { pinyin: "yún", character: "云" },
+                    { pinyin: "huā", character: "花" },
+                    { pinyin: "cǎo", character: "草" },
+                    { pinyin: "niǎo", character: "鸟" },
+                    { pinyin: "chóng", character: "虫" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "qīng", character: "青" },
+                    { pinyin: "qíng", character: "晴" },
+                    { pinyin: "jìng", character: "静" },
+                    { pinyin: "qīng", character: "清" },
+                    { pinyin: "bǐ", character: "比" },
+                    { pinyin: "jiào", character: "叫" },
+                    { pinyin: "hǎo", character: "好" },
+                    { pinyin: "hào", character: "号" },
+                    { pinyin: "zhī", character: "之" },
+                    { pinyin: "hū", character: "乎" },
+                    { pinyin: "xiào", character: "笑" },
+                    { pinyin: "wā", character: "蛙" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "rén", character: "人" },
+                    { pinyin: "kǒu", character: "口" },
+                    { pinyin: "dù", character: "肚" },
+                    { pinyin: "pí", character: "皮" },
+                    { pinyin: "yǎn", character: "眼" },
+                    { pinyin: "ěr", character: "耳" },
+                    { pinyin: "tóu", character: "头" },
+                    { pinyin: "shǒu", character: "手" },
+                    { pinyin: "jiǎo", character: "脚" },
+                    { pinyin: "zú", character: "足" },
+                    { pinyin: "xīn", character: "心" },
+                    { pinyin: "fù", character: "腹" }
+                ]
+            },
+            "2A": { // 二年级上册
+                "1": [ // 第一单元
+                    { pinyin: "liǎng", character: "两" },
+                    { pinyin: "jiù", character: "就" },
+                    { pinyin: "nǎ", character: "哪" },
+                    { pinyin: "kuān", character: "宽" },
+                    { pinyin: "dǐng", character: "顶" },
+                    { pinyin: "dù", character: "肚" },
+                    { pinyin: "pí", character: "皮" },
+                    { pinyin: "hái", character: "孩" },
+                    { pinyin: "tiào", character: "跳" },
+                    { pinyin: "biàn", character: "变" },
+                    { pinyin: "duì", character: "对" },
+                    { pinyin: "cāo", character: "操" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "jí", character: "极" },
+                    { pinyin: "piàn", character: "片" },
+                    { pinyin: "bàng", character: "傍" },
+                    { pinyin: "hǎi", character: "海" },
+                    { pinyin: "yáng", character: "洋" },
+                    { pinyin: "zuò", character: "作" },
+                    { pinyin: "gěi", character: "给" },
+                    { pinyin: "dài", character: "带" },
+                    { pinyin: "fǎ", character: "法" },
+                    { pinyin: "rú", character: "如" },
+                    { pinyin: "wán", character: "玩" },
+                    { pinyin: "shuō", character: "说" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "jiǎo", character: "脚" },
+                    { pinyin: "tā", character: "它" },
+                    { pinyin: "wá", character: "娃" },
+                    { pinyin: "tā", character: "她" },
+                    { pinyin: "máo", character: "毛" },
+                    { pinyin: "gèng", character: "更" },
+                    { pinyin: "zhī", character: "知" },
+                    { pinyin: "shí", character: "识" },
+                    { pinyin: "yuán", character: "园" },
+                    { pinyin: "kǒng", character: "孔" },
+                    { pinyin: "què", character: "雀" },
+                    { pinyin: "huán", character: "环" }
+                ]
+            },
+            "2B": { // 二年级下册
+                "1": [ // 第一单元
+                    { pinyin: "gū", character: "姑" },
+                    { pinyin: "niang", character: "娘" },
+                    { pinyin: "tǔ", character: "吐" },
+                    { pinyin: "liǔ", character: "柳" },
+                    { pinyin: "xìng", character: "杏" },
+                    { pinyin: "huā", character: "花" },
+                    { pinyin: "cūn", character: "村" },
+                    { pinyin: "yě", character: "野" },
+                    { pinyin: "sàn", character: "散" },
+                    { pinyin: "bù", character: "步" },
+                    { pinyin: "wēn", character: "温" },
+                    { pinyin: "nuǎn", character: "暖" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "mèi", character: "妹" },
+                    { pinyin: "māo", character: "猫" },
+                    { pinyin: "bāo", character: "包" },
+                    { pinyin: "zhǐ", character: "纸" },
+                    { pinyin: "zhī", character: "支" },
+                    { pinyin: "cì", character: "次" },
+                    { pinyin: "guā", character: "瓜" },
+                    { pinyin: "wá", character: "娃" },
+                    { pinyin: "guà", character: "挂" },
+                    { pinyin: "huà", character: "画" },
+                    { pinyin: "kè", character: "课" },
+                    { pinyin: "liàn", character: "练" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "yuàn", character: "愿" },
+                    { pinyin: "yì", character: "意" },
+                    { pinyin: "píng", character: "坪" },
+                    { pinyin: "bà", character: "坝" },
+                    { pinyin: "cāo", character: "操" },
+                    { pinyin: "chǎng", character: "场" },
+                    { pinyin: "zhāo", character: "招" },
+                    { pinyin: "huàn", character: "唤" },
+                    { pinyin: "hán", character: "寒" },
+                    { pinyin: "lěng", character: "冷" },
+                    { pinyin: "qíng", character: "晴" },
+                    { pinyin: "lǎng", character: "朗" }
+                ]
+            },
+            "3A": { // 三年级上册
+                "1": [ // 第一单元
+                    { pinyin: "chén", character: "晨" },
+                    { pinyin: "róng", character: "绒" },
+                    { pinyin: "qiú", character: "球" },
+                    { pinyin: "hàn", character: "汉" },
+                    { pinyin: "yàn", character: "艳" },
+                    { pinyin: "fú", character: "服" },
+                    { pinyin: "zhuāng", character: "装" },
+                    { pinyin: "bàn", character: "扮" },
+                    { pinyin: "dú", character: "读" },
+                    { pinyin: "jìng", character: "静" },
+                    { pinyin: "tíng", character: "停" },
+                    { pinyin: "lè", character: "乐" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "tíng", character: "停" },
+                    { pinyin: "cū", character: "粗" },
+                    { pinyin: "yǐng", character: "影" },
+                    { pinyin: "luò", character: "落" },
+                    { pinyin: "huāng", character: "荒" },
+                    { pinyin: "dí", character: "笛" },
+                    { pinyin: "wǔ", character: "舞" },
+                    { pinyin: "kuáng", character: "狂" },
+                    { pinyin: "fá", character: "罚" },
+                    { pinyin: "jiǎ", character: "假" },
+                    { pinyin: "zhǔn", character: "准" },
+                    { pinyin: "bèi", character: "备" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "hù", character: "互" },
+                    { pinyin: "suǒ", character: "所" },
+                    { pinyin: "gòu", character: "够" },
+                    { pinyin: "cāi", character: "猜" },
+                    { pinyin: "yáng", character: "扬" },
+                    { pinyin: "bì", character: "臂" },
+                    { pinyin: "chù", character: "触" },
+                    { pinyin: "hán", character: "寒" },
+                    { pinyin: "jìng", character: "径" },
+                    { pinyin: "xié", character: "斜" },
+                    { pinyin: "yóu", character: "游" },
+                    { pinyin: "wán", character: "玩" }
+                ]
+            },
+            "3B": { // 三年级下册
+                "1": [ // 第一单元
+                    { pinyin: "yàn", character: "燕" },
+                    { pinyin: "zi", character: "子" },
+                    { pinyin: "chūn", character: "春" },
+                    { pinyin: "fēng", character: "风" },
+                    { pinyin: "huā", character: "花" },
+                    { pinyin: "cǎo", character: "草" },
+                    { pinyin: "táo", character: "桃" },
+                    { pinyin: "liǔ", character: "柳" },
+                    { pinyin: "xìng", character: "杏" },
+                    { pinyin: "méi", character: "梅" },
+                    { pinyin: "jiāo", character: "交" },
+                    { pinyin: "liú", character: "流" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "qīng", character: "清" },
+                    { pinyin: "chén", character: "晨" },
+                    { pinyin: "hū", character: "呼" },
+                    { pinyin: "xī", character: "吸" },
+                    { pinyin: "shì", character: "世" },
+                    { pinyin: "jiè", character: "界" },
+                    { pinyin: "zhī", character: "之" },
+                    { pinyin: "wù", character: "物" },
+                    { pinyin: "yùn", character: "运" },
+                    { pinyin: "dòng", character: "动" },
+                    { pinyin: "shén", character: "神" },
+                    { pinyin: "qì", character: "气" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "jiāo", character: "郊" },
+                    { pinyin: "wài", character: "外" },
+                    { pinyin: "yě", character: "野" },
+                    { pinyin: "cūn", character: "村" },
+                    { pinyin: "zhuāng", character: "庄" },
+                    { pinyin: "bái", character: "白" },
+                    { pinyin: "tiān", character: "天" },
+                    { pinyin: "hú", character: "湖" },
+                    { pinyin: "shān", character: "山" },
+                    { pinyin: "shuǐ", character: "水" },
+                    { pinyin: "niǎo", character: "鸟" },
+                    { pinyin: "huā", character: "花" }
+                ]
+            },
+            "4A": { // 四年级上册
+                "1": [ // 第一单元
+                    { pinyin: "lóu", character: "楼" },
+                    { pinyin: "tái", character: "台" },
+                    { pinyin: "zhōng", character: "中" },
+                    { pinyin: "guó", character: "国" },
+                    { pinyin: "jiāng", character: "江" },
+                    { pinyin: "hé", character: "河" },
+                    { pinyin: "huǒ", character: "火" },
+                    { pinyin: "shān", character: "山" },
+                    { pinyin: "shí", character: "石" },
+                    { pinyin: "tián", character: "田" },
+                    { pinyin: "dà", character: "大" },
+                    { pinyin: "xiǎo", character: "小" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "fēng", character: "风" },
+                    { pinyin: "yǔ", character: "雨" },
+                    { pinyin: "yún", character: "云" },
+                    { pinyin: "niǎo", character: "鸟" },
+                    { pinyin: "huā", character: "花" },
+                    { pinyin: "cǎo", character: "草" },
+                    { pinyin: "shù", character: "树" },
+                    { pinyin: "mù", character: "木" },
+                    { pinyin: "zhú", character: "竹" },
+                    { pinyin: "lín", character: "林" },
+                    { pinyin: "sēn", character: "森" },
+                    { pinyin: "yán", character: "岩" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "rén", character: "人" },
+                    { pinyin: "kǒu", character: "口" },
+                    { pinyin: "mù", character: "目" },
+                    { pinyin: "ěr", character: "耳" },
+                    { pinyin: "shǒu", character: "手" },
+                    { pinyin: "zú", character: "足" },
+                    { pinyin: "xīn", character: "心" },
+                    { pinyin: "fù", character: "腹" },
+                    { pinyin: "tóu", character: "头" },
+                    { pinyin: "jiǎo", character: "脚" },
+                    { pinyin: "gān", character: "干" },
+                    { pinyin: "gàn", character: "干" }
+                ]
+            },
+            "4B": { // 四年级下册
+                "1": [ // 第一单元
+                    { pinyin: "chūn", character: "春" },
+                    { pinyin: "xià", character: "夏" },
+                    { pinyin: "qiū", character: "秋" },
+                    { pinyin: "dōng", character: "冬" },
+                    { pinyin: "jié", character: "节" },
+                    { pinyin: "rì", character: "日" },
+                    { pinyin: "yuè", character: "月" },
+                    { pinyin: "shí", character: "时" },
+                    { pinyin: "fēn", character: "分" },
+                    { pinyin: "miǎo", character: "秒" },
+                    { pinyin: "nián", character: "年" },
+                    { pinyin: "suì", character: "岁" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "jiā", character: "家" },
+                    { pinyin: "tíng", character: "庭" },
+                    { pinyin: "xiāng", character: "乡" },
+                    { pinyin: "cūn", character: "村" },
+                    { pinyin: "zhèn", character: "镇" },
+                    { pinyin: "chéng", character: "城" },
+                    { pinyin: "shì", character: "市" },
+                    { pinyin: "guó", character: "国" },
+                    { pinyin: "jiāng", character: "江" },
+                    { pinyin: "hé", character: "河" },
+                    { pinyin: "hǎi", character: "海" },
+                    { pinyin: "lù", character: "陆" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "shēng", character: "生" },
+                    { pinyin: "sǐ", character: "死" },
+                    { pinyin: "guī", character: "归" },
+                    { pinyin: "qù", character: "去" },
+                    { pinyin: "lái", character: "来" },
+                    { pinyin: "wǎng", character: "往" },
+                    { pinyin: "shàng", character: "上" },
+                    { pinyin: "xià", character: "下" },
+                    { pinyin: "zuǒ", character: "左" },
+                    { pinyin: "yòu", character: "右" },
+                    { pinyin: "qián", character: "前" },
+                    { pinyin: "hòu", character: "后" }
+                ]
+            },
+            "5A": { // 五年级上册
+                "1": [ // 第一单元
+                    { pinyin: "gāo", character: "高" },
+                    { pinyin: "dī", character: "低" },
+                    { pinyin: "shēn", character: "深" },
+                    { pinyin: "qiǎn", character: "浅" },
+                    { pinyin: "kuān", character: "宽" },
+                    { pinyin: "zhǎi", character: "窄" },
+                    { pinyin: "cháng", character: "长" },
+                    { pinyin: "duǎn", character: "短" },
+                    { pinyin: "dà", character: "大" },
+                    { pinyin: "xiǎo", character: "小" },
+                    { pinyin: "hóng", character: "红" },
+                    { pinyin: "lǜ", character: "绿" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "tài", character: "太" },
+                    { pinyin: "yáng", character: "阳" },
+                    { pinyin: "yuè", character: "月" },
+                    { pinyin: "liàng", character: "亮" },
+                    { pinyin: "xīng", character: "星" },
+                    { pinyin: "yún", character: "云" },
+                    { pinyin: "hǎi", character: "海" },
+                    { pinyin: "yáng", character: "洋" },
+                    { pinyin: "jiāng", character: "江" },
+                    { pinyin: "hé", character: "河" },
+                    { pinyin: "lù", character: "路" },
+                    { pinyin: "dào", character: "道" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "māo", character: "猫" },
+                    { pinyin: "gǒu", character: "狗" },
+                    { pinyin: "zhū", character: "猪" },
+                    { pinyin: "niú", character: "牛" },
+                    { pinyin: "yáng", character: "羊" },
+                    { pinyin: "mǎ", character: "马" },
+                    { pinyin: "jī", character: "鸡" },
+                    { pinyin: "duck", character: "鸭" },
+                    { pinyin: "é", character: "鹅" },
+                    { pinyin: "yā", character: "鸦" },
+                    { pinyin: "niǎo", character: "鸟" },
+                    { pinyin: "chóng", character: "虫" }
+                ]
+            },
+            "5B": { // 五年级下册
+                "1": [ // 第一单元
+                    { pinyin: "xiāng", character: "香" },
+                    { pinyin: "chòu", character: "臭" },
+                    { pinyin: "tián", character: "甜" },
+                    { pinyin: "ku", character: "苦" },
+                    { pinyin: "suan", character: "酸" },
+                    { pinyin: "la", character: "辣" },
+                    { pinyin: "he", character: "和" },
+                    { pinyin: "nong", character: "浓" },
+                    { pinyin: "dan", character: "淡" },
+                    { pinyin: "xian", character: "咸" },
+                    { pinyin: "wei", character: "味" },
+                    { pinyin: "dao", character: "道" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "ren", character: "人" },
+                    { pinyin: "min", character: "民" },
+                    { pinyin: "zhong", character: "众" },
+                    { pinyin: "qun", character: "群" },
+                    { pinyin: "dui", character: "队" },
+                    { pinyin: "ban", character: "班" },
+                    { pinyin: "zu", character: "组" },
+                    { pinyin: "she", character: "社" },
+                    { pinyin: "tuan", character: "团" },
+                    { pinyin: "jie", character: "结" },
+                    { pinyin: "he", character: "合" },
+                    { pinyin: "zuo", character: "作" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "xue", character: "学" },
+                    { pinyin: "xi", character: "习" },
+                    { pinyin: "ke", character: "课" },
+                    { pinyin: "tang", character: "堂" },
+                    { pinyin: "shu", character: "书" },
+                    { pinyin: "ben", character: "本" },
+                    { pinyin: "zi", character: "字" },
+                    { pinyin: "dian", character: "典" },
+                    { pinyin: "ci", character: "词" },
+                    { pinyin: "yu", character: "语" },
+                    { pinyin: "wen", character: "文" },
+                    { pinyin: "zhang", character: "章" }
+                ]
+            },
+            "6A": { // 六年级上册
+                "1": [ // 第一单元
+                    { pinyin: "tian", character: "天" },
+                    { pinyin: "di", character: "地" },
+                    { pinyin: "ren", character: "人" },
+                    { pinyin: "he", character: "和" },
+                    { pinyin: "ping", character: "平" },
+                    { pinyin: "an", character: "安" },
+                    { pinyin: "kang", character: "康" },
+                    { pinyin: "fu", character: "福" },
+                    { pinyin: "lu", character: "禄" },
+                    { pinyin: "shou", character: "寿" },
+                    { pinyin: "xi", character: "喜" },
+                    { pinyin: "le", character: "乐" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "chun", character: "春" },
+                    { pinyin: "xia", character: "夏" },
+                    { pinyin: "qiu", character: "秋" },
+                    { pinyin: "dong", character: "冬" },
+                    { pinyin: "ren", character: "人" },
+                    { pinyin: "sheng", character: "生" },
+                    { pinyin: "si", character: "死" },
+                    { pinyin: "lao", character: "老" },
+                    { pinyin: "bing", character: "病" },
+                    { pinyin: "si", character: "思" },
+                    { pinyin: "xiang", character: "想" },
+                    { pinyin: "nian", character: "念" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "jia", character: "家" },
+                    { pinyin: "ting", character: "庭" },
+                    { pinyin: "xiang", character: "乡" },
+                    { pinyin: "gu", character: "故" },
+                    { pinyin: "yuan", character: "园" },
+                    { pinyin: "lin", character: "林" },
+                    { pinyin: "se", character: "色" },
+                    { pinyin: "cai", character: "彩" },
+                    { pinyin: "guang", character: "光" },
+                    { pinyin: "ming", character: "明" },
+                    { pinyin: "hua", character: "花" },
+                    { pinyin: "cao", character: "草" }
+                ]
+            },
+            "6B": { // 六年级下册
+                "1": [ // 第一单元
+                    { pinyin: "ren", character: "仁" },
+                    { pinyin: "yi", character: "义" },
+                    { pinyin: "li", character: "礼" },
+                    { pinyin: "zhi", character: "智" },
+                    { pinyin: "xin", character: "信" },
+                    { pinyin: "de", character: "德" },
+                    { pinyin: "xing", character: "行" },
+                    { pinyin: "dao", character: "道" },
+                    { pinyin: "li", character: "理" },
+                    { pinyin: "fa", character: "法" },
+                    { pinyin: "gui", character: "规" },
+                    { pinyin: "ju", character: "矩" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "wen", character: "文" },
+                    { pinyin: "hua", character: "化" },
+                    { pinyin: "li", character: "历" },
+                    { pinyin: "shi", character: "史" },
+                    { pinyin: "di", character: "地" },
+                    { pinyin: "li", character: "理" },
+                    { pinyin: "sheng", character: "生" },
+                    { pinyin: "wu", character: "物" },
+                    { pinyin: "shu", character: "数" },
+                    { pinyin: "xue", character: "学" },
+                    { pinyin: "ying", character: "英" },
+                    { pinyin: "yu", character: "语" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "jia", character: "加" },
+                    { pinyin: "jian", character: "减" },
+                    { pinyin: "cheng", character: "乘" },
+                    { pinyin: "chu", character: "除" },
+                    { pinyin: "he", character: "和" },
+                    { pinyin: "cha", character: "差" },
+                    { pinyin: "ji", character: "积" },
+                    { pinyin: "shang", character: "商" },
+                    { pinyin: "yuan", character: "圆" },
+                    { pinyin: "fang", character: "方" },
+                    { pinyin: "san", character: "三" },
+                    { pinyin: "jiao", character: "角" }
+                ]
+            },
+                    { pinyin: "mù", character: "木" },
+                    { pinyin: "jīn", character: "金" },
+                    { pinyin: "shuǐ", character: "水" },
+                    { pinyin: "tǔ", character: "土" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "rì", character: "日" },
+                    { pinyin: "yuè", character: "月" },
+                    { pinyin: "shuāng", character: "双" },
+                    { pinyin: "mù", character: "目" },
+                    { pinyin: "ěr", character: "耳" },
+                    { pinyin: "shǒu", character: "手" },
+                    { pinyin: "zú", character: "足" },
+                    { pinyin: "kǒu", character: "口" },
+                    { pinyin: "yán", character: "言" },
+                    { pinyin: "xīn", character: "心" }
+                ],
+                "4": [ // 第四单元
+                    { pinyin: "sì", character: "四" },
+                    { pinyin: "wǔ", character: "五" },
+                    { pinyin: "liù", character: "六" },
+                    { pinyin: "qī", character: "七" },
+                    { pinyin: "bā", character: "八" },
+                    { pinyin: "jiǔ", character: "九" },
+                    { pinyin: "shí", character: "十" },
+                    { pinyin: "bǎi", character: "百" },
+                    { pinyin: "qiān", character: "千" },
+                    { pinyin: "wàn", character: "万" }
+                ],
+                "5": [ // 第五单元
+                    { pinyin: "zhōng", character: "中" },
+                    { pinyin: "wǔ", character: "午" },
+                    { pinyin: "shàng", character: "上" },
+                    { pinyin: "xià", character: "下" },
+                    { pinyin: "zǎo", character: "早" },
+                    { pinyin: "wǎn", character: "晚" },
+                    { pinyin: "tǐng", character: "挺" },
+                    { pinyin: "gǔ", character: "鼓" },
+                    { pinyin: "shù", character: "数" },
+                    { pinyin: "hòu", character: "厚" }
+                ],
+                "6": [ // 第六单元
+                    { pinyin: "bǎo", character: "宝" },
+                    { pinyin: "guì", character: "贵" },
+                    { pinyin: "bīn", character: "滨" },
+                    { pinyin: "huī", character: "灰" },
+                    { pinyin: "yú", character: "渔" },
+                    { pinyin: "biàn", character: "遍" },
+                    { pinyin: "tǎng", character: "躺" },
+                    { pinyin: "zǎi", character: "载" },
+                    { pinyin: "kào", character: "靠" },
+                    { pinyin: "zāi", character: "栽" }
+                ]
+            },
+            "5": { // 五年级
+                "1": [ // 第一单元
+                    { pinyin: "yán", character: "研" },
+                    { pinyin: "jiū", character: "究" },
+                    { pinyin: "zhù", character: "筑" },
+                    { pinyin: "zào", character: "造" },
+                    { pinyin: "yě", character: "野" },
+                    { pinyin: "xíng", character: "型" },
+                    { pinyin: "fā", character: "发" },
+                    { pinyin: "míng", character: "明" },
+                    { pinyin: "chāo", character: "超" },
+                    { pinyin: "yuè", character: "越" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "zhī", character: "蜘" },
+                    { pinyin: "zhū", character: "蛛" },
+                    { pinyin: "páo", character: "咆" },
+                    { pinyin: "xiào", character: "哮" },
+                    { pinyin: "pù", character: "瀑" },
+                    { pinyin: "bù", character: "布" },
+                    { pinyin: "huāng", character: "荒" },
+                    { pinyin: "wú", character: "芜" },
+                    { pinyin: "mào", character: "茂" },
+                    { pinyin: "shèng", character: "盛" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "shī", character: "狮" },
+                    { pinyin: "zǐ", character: "子" },
+                    { pinyin: "hǔ", character: "虎" },
+                    { pinyin: "bào", character: "豹" },
+                    { pinyin: "lóng", character: "龙" },
+                    { pinyin: "hóu", character: "猴" },
+                    { pinyin: "guī", character: "龟" },
+                    { pinyin: "xiè", character: "蟹" },
+                    { pinyin: "yú", character: "鱼" },
+                    { pinyin: "xiā", character: "虾" }
+                ],
+                "4": [ // 第四单元
+                    { pinyin: "chūn", character: "春" },
+                    { pinyin: "xià", character: "夏" },
+                    { pinyin: "qiū", character: "秋" },
+                    { pinyin: "dōng", character: "冬" },
+                    { pinyin: "fēng", character: "风" },
+                    { pinyin: "xuě", character: "雪" },
+                    { pinyin: "yún", character: "云" },
+                    { pinyin: "yǔ", character: "雨" },
+                    { pinyin: "jié", character: "节" },
+                    { pinyin: "rì", character: "日" }
+                ],
+                "5": [ // 第五单元
+                    { pinyin: "bāng", character: "帮" },
+                    { pinyin: "zhù", character: "助" },
+                    { pinyin: "fú", character: "扶" },
+                    { pinyin: "zhù", character: "助" },
+                    { pinyin: "xié", character: "协" },
+                    { pinyin: "zuò", character: "作" },
+                    { pinyin: "gòng", character: "共" },
+                    { pinyin: "tóng", character: "同" },
+                    { pinyin: "fēn", character: "分" },
+                    { pinyin: "xiǎng", character: "享" }
+                ],
+                "6": [ // 第六单元
+                    { pinyin: "ài", character: "爱" },
+                    { pinyin: "xīn", character: "心" },
+                    { pinyin: "rén", character: "人" },
+                    { pinyin: "yì", character: "意" },
+                    { pinyin: "lǐ", character: "礼" },
+                    { pinyin: "mào", character: "貌" },
+                    { pinyin: "jìng", character: "敬" },
+                    { pinyin: "lǐ", character: "理" },
+                    { pinyin: "dào", character: "道" },
+                    { pinyin: "dé", character: "德" }
+                ]
+            },
+            "6": { // 六年级
+                "1": [ // 第一单元
+                    { pinyin: "guān", character: "关" },
+                    { pinyin: "jiàn", character: "键" },
+                    { pinyin: "cāo", character: "操" },
+                    { pinyin: "zòng", character: "纵" },
+                    { pinyin: "kòng", character: "控" },
+                    { pinyin: "zhì", character: "制" },
+                    { pinyin: "jié", character: "节" },
+                    { pinyin: "zhī", character: "支" },
+                    { pinyin: "yuán", character: "援" },
+                    { pinyin: "zhù", character: "助" }
+                ],
+                "2": [ // 第二单元
+                    { pinyin: "chén", character: "陈" },
+                    { pinyin: "shù", character: "述" },
+                    { pinyin: "zhǔ", character: "主" },
+                    { pinyin: "zhāng", character: "张" },
+                    { pinyin: "biàn", character: "辩" },
+                    { pinyin: "lùn", character: "论" },
+                    { pinyin: "zhèng", character: "证" },
+                    { pinyin: "jù", character: "据" },
+                    { pinyin: "lǐ", character: "理" },
+                    { pinyin: "yóu", character: "由" }
+                ],
+                "3": [ // 第三单元
+                    { pinyin: "shén", character: "神" },
+                    { pinyin: "qí", character: "奇" },
+                    { pinyin: "miào", character: "妙" },
+                    { pinyin: "huàn", character: "幻" },
+                    { pinyin: "yǐng", character: "影" },
+                    { pinyin: "xiàng", character: "像" },
+                    { pinyin: "mèng", character: "梦" },
+                    { pinyin: "huàn", character: "幻" },
+                    { pinyin: "tāo", character: "涛" },
+                    { pinyin: "tú", character: "图" }
+                ],
+                "4": [ // 第四单元
+                    { pinyin: "jīng", character: "精" },
+                    { pinyin: "cǎi", character: "彩" },
+                    { pinyin: "bīn", character: "缤" },
+                    { pinyin: "fēn", character: "纷" },
+                    { pinyin: "xuàn", character: "绚" },
+                    { pinyin: "lì", character: "丽" },
+                    { pinyin: "guāng", character: "光" },
+                    { pinyin: "máng", character: "芒" },
+                    { pinyin: "huī", character: "辉" },
+                    { pinyin: "huáng", character: "煌" }
+                ],
+                "5": [ // 第五单元
+                    { pinyin: "jié", character: "杰" },
+                    { pinyin: "chū", character: "出" },
+                    { pinyin: "zhòng", character: "众" },
+                    { pinyin: "yī", character: "一" },
+                    { pinyin: "bān", character: "班" },
+                    { pinyin: "tuán", character: "团" },
+                    { pinyin: "jié", character: "结" },
+                    { pinyin: "tǐ", character: "体" },
+                    { pinyin: "zhì", character: "智" },
+                    { pinyin: "huì", character: "慧" }
+                ],
+                "6": [ // 第六单元
+                    { pinyin: "fù", character: "富" },
+                    { pinyin: "qiáng", character: "强" },
+                    { pinyin: "mín", character: "民" },
+                    { pinyin: "zú", character: "族" },
+                    { pinyin: "xīng", character: "兴" },
+                    { pinyin: "wàng", character: "旺" },
+                    { pinyin: "zhōng", character: "中" },
+                    { pinyin: "huá", character: "华" },
+                    { pinyin: "gōng", character: "共" },
+                    { pinyin: "hé", character: "和" }
+                ]
+            }
+        };
+
+        // Web Audio API 音频管理类
+        class AudioManager {
+            constructor() {
+                this.audioContext = null;
+                this.isMuted = false;
+                this.initAudioContext();
+            }
+
+            initAudioContext() {
+                // 创建音频上下文
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+            }
+
+            // 生成简单的音效
+            generateTone(frequency, duration, type = 'sine', volume = 0.3) {
+                if (!this.audioContext) this.initAudioContext();
+                
+                // 如果音频上下文被挂起，恢复它
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                gainNode.gain.value = volume;
+
+                // 设置音量包络
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            // 播放按钮点击音效
+            playButtonClick() {
+                if (this.isMuted) return;
+                this.generateTone(800, 0.05, 'square', 0.2);
+            }
+
+            // 播放正确配对音效
+            playCorrectPair() {
+                if (this.isMuted) return;
+                // 播放愉快的上升音调
+                this.generateTone(523.25, 0.1, 'sine', 0.3); // C5
+                setTimeout(() => this.generateTone(659.25, 0.15, 'sine', 0.3), 100); // E5
+                setTimeout(() => this.generateTone(783.99, 0.2, 'sine', 0.3), 250); // G5
+            }
+
+            // 播放错误配对音效
+            playWrongPair() {
+                if (this.isMuted) return;
+                // 播放不和谐的下降音调
+                this.generateTone(329.63, 0.15, 'triangle', 0.3); // E4
+                setTimeout(() => this.generateTone(261.63, 0.2, 'triangle', 0.3), 150); // C4
+            }
+
+            // 播放游戏开始音效
+            playGameStart() {
+                if (this.isMuted) return;
+                // 播放上升的音调序列
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+                notes.forEach((note, index) => {
+                    setTimeout(() => this.generateTone(note, 0.1, 'sine', 0.3), index * 100);
+                });
+            }
+
+            // 播放游戏完成音效
+            playGameComplete() {
+                if (this.isMuted) return;
+                // 播放愉快的和弦
+                this.generateTone(523.25, 0.3, 'sine', 0.2); // C5
+                setTimeout(() => this.generateTone(659.25, 0.3, 'sine', 0.2), 50); // E5
+                setTimeout(() => this.generateTone(783.99, 0.3, 'sine', 0.2), 100); // G5
+                setTimeout(() => this.generateTone(1046.50, 0.5, 'sine', 0.3), 200); // C6
+            }
+
+            // 切换静音状态
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                return this.isMuted;
+            }
+        }
+
+        // 创建音频管理器实例
+        const audioManager = new AudioManager();
+
+        // 游戏状态
+        let gameState = {
+            selectedGrade: "1",
+            selectedUnit: "1",
+            customCharacters: [],
+            useCustomCharacters: false,
+            currentCharacters: [],
+            selectedPinyin: null,
+            selectedCharacter: null,
+            gameStarted: false,
+            startTime: 0,
+            endTime: 0,
+            timerInterval: null,
+            elapsedTime: 0,
+            errorCount: 0,
+            completedPairs: 0,
+            totalPairs: 0
+        };
+
+        // DOM 元素
+        const elements = {
+            soundToggleBtn: document.getElementById('soundToggleBtn'),
+            gradeSelect: document.getElementById('gradeSelect'),
+            unitSelect: document.getElementById('unitSelect'),
+            customWordsBtn: document.getElementById('customWordsBtn'),
+            toggleCustomWordsBtn: document.getElementById('toggleCustomWordsBtn'),
+            startGameBtn: document.getElementById('startGameBtn'),
+            pinyinArea: document.getElementById('pinyinArea'),
+            characterArea: document.getElementById('characterArea'),
+            gameTimer: document.getElementById('gameTimer'),
+            errorCount: document.getElementById('errorCount'),
+            scoreSection: document.getElementById('scoreSection'),
+            finalErrorCount: document.getElementById('finalErrorCount'),
+            finalCompletionTime: document.getElementById('finalCompletionTime'),
+            finalAccuracyRate: document.getElementById('finalAccuracyRate'),
+            customWordsModal: document.getElementById('customWordsModal'),
+            closeCustomWordsModal: document.getElementById('closeCustomWordsModal'),
+            customWordsTextarea: document.getElementById('customWordsTextarea'),
+            saveCustomWords: document.getElementById('saveCustomWords'),
+            resetCustomWords: document.getElementById('resetCustomWords'),
+            helpBtn: document.getElementById('helpBtn'),
+            helpModal: document.getElementById('helpModal'),
+            closeHelpModal: document.getElementById('closeHelpModal'),
+            closeHelpBtn: document.getElementById('closeHelpBtn'),
+            gameCompleteModal: document.getElementById('gameCompleteModal'),
+            closeGameCompleteModal: document.getElementById('closeGameCompleteModal'),
+            resultTime: document.getElementById('resultTime'),
+            resultErrors: document.getElementById('resultErrors'),
+            resultAccuracy: document.getElementById('resultAccuracy'),
+            gameRating: document.getElementById('gameRating'),
+            gameComment: document.getElementById('gameComment'),
+            playAgainBtn: document.getElementById('playAgainBtn'),
+            newGameBtn: document.getElementById('newGameBtn')
+        };
+
+        // 初始化
+        function init() {
+            // 设置事件监听器
+            elements.soundToggleBtn.addEventListener('click', handleSoundToggle);
+            elements.gradeSelect.addEventListener('change', handleGradeChange);
+            elements.unitSelect.addEventListener('change', handleUnitChange);
+            elements.customWordsBtn.addEventListener('click', handleCustomWordsBtnClick);
+            elements.toggleCustomWordsBtn.addEventListener('click', handleToggleCustomWordsBtnClick);
+            elements.startGameBtn.addEventListener('click', handleStartGameBtnClick);
+            elements.closeCustomWordsModal.addEventListener('click', handleCloseCustomWordsModal);
+            elements.saveCustomWords.addEventListener('click', handleSaveCustomWords);
+            elements.resetCustomWords.addEventListener('click', handleResetCustomWords);
+            elements.helpBtn.addEventListener('click', handleHelpBtnClick);
+            elements.closeHelpModal.addEventListener('click', handleCloseHelpModal);
+            elements.closeHelpBtn.addEventListener('click', handleCloseHelpModal);
+            elements.closeGameCompleteModal.addEventListener('click', handleCloseGameCompleteModal);
+            elements.playAgainBtn.addEventListener('click', handlePlayAgainBtnClick);
+            elements.newGameBtn.addEventListener('click', handleNewGameBtnClick);
+        }
+
+        // 事件处理函数
+        function handleGradeChange() {
+            gameState.selectedGrade = elements.gradeSelect.value;
+        }
+
+        function handleUnitChange() {
+            gameState.selectedUnit = elements.unitSelect.value;
+        }
+
+        function handleCustomWordsBtnClick() {
+            audioManager.playButtonClick();
+            elements.customWordsModal.classList.remove('hidden');
+        }
+
+        function handleCloseCustomWordsModal() {
+            audioManager.playButtonClick();
+            elements.customWordsModal.classList.add('hidden');
+        }
+
+        function handleSaveCustomWords() {
+            audioManager.playButtonClick();
+            const text = elements.customWordsTextarea.value.trim();
+            if (!text) return;
+
+            const lines = text.split('\n');
+            const customCharacters = [];
+
+            for (const line of lines) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                    const pinyin = parts[0].trim();
+                    const character = parts.slice(1).join(' ').trim();
+                    customCharacters.push({ pinyin, character });
+                }
+            }
+
+            if (customCharacters.length > 0) {
+                gameState.customCharacters = customCharacters;
+                gameState.useCustomCharacters = true;
+                updateToggleCustomWordsBtn();
+                alert(`成功添加 ${customCharacters.length} 个自定义生字！`);
+                elements.customWordsModal.classList.add('hidden');
+                elements.customWordsTextarea.value = '';
+            } else {
+                alert('未能识别任何有效生字，请检查格式！');
+            }
+        }
+        
+        function handleResetCustomWords() {
+            audioManager.playButtonClick();
+            if (confirm('确定要重置所有自定义生字吗？此操作不可撤销！')) {
+                gameState.customCharacters = [];
+                gameState.useCustomCharacters = false;
+                updateToggleCustomWordsBtn();
+                elements.customWordsTextarea.value = '';
+                alert('已成功重置自定义生字！');
+            }
+        }
+
+        function handleHelpBtnClick() {
+            audioManager.playButtonClick();
+            elements.helpModal.classList.remove('hidden');
+        }
+
+        function handleCloseHelpModal() {
+            audioManager.playButtonClick();
+            elements.helpModal.classList.add('hidden');
+        }
+
+        function handleCloseGameCompleteModal() {
+            audioManager.playButtonClick();
+            elements.gameCompleteModal.classList.add('hidden');
+        }
+
+        function handlePlayAgainBtnClick() {
+            audioManager.playButtonClick();
+            elements.gameCompleteModal.classList.add('hidden');
+            startGame();
+        }
+
+        function handleNewGameBtnClick() {
+            audioManager.playButtonClick();
+            elements.gameCompleteModal.classList.add('hidden');
+            resetGame();
+            // 重置后默认使用教材生字
+            gameState.useCustomCharacters = false;
+            updateToggleCustomWordsBtn();
+        }
+
+        function handleStartGameBtnClick() {
+            audioManager.playButtonClick();
+            startGame();
+        }
+
+        function handleToggleCustomWordsBtnClick() {
+            audioManager.playButtonClick();
+            // 只有当有自定义生字时才能切换
+            if (gameState.customCharacters.length > 0) {
+                gameState.useCustomCharacters = !gameState.useCustomCharacters;
+                updateToggleCustomWordsBtn();
+            } else {
+                alert('请先添加自定义生字！');
+            }
+        }
+        
+        function updateToggleCustomWordsBtn() {
+            if (gameState.useCustomCharacters) {
+                elements.toggleCustomWordsBtn.innerHTML = '<i class="fa fa-toggle-on mr-1"></i>启用';
+                elements.toggleCustomWordsBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                elements.toggleCustomWordsBtn.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600');
+            } else {
+                elements.toggleCustomWordsBtn.innerHTML = '<i class="fa fa-toggle-off mr-1"></i>禁用';
+                elements.toggleCustomWordsBtn.classList.remove('bg-green-500', 'text-white', 'hover:bg-green-600');
+                elements.toggleCustomWordsBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            }
+        }
+        
+        // 游戏函数
+        function handleSoundToggle() {
+            const isMuted = audioManager.toggleMute();
+            const icon = elements.soundToggleBtn.querySelector('i');
+            if (isMuted) {
+                icon.classList.remove('fa-volume-up');
+                icon.classList.add('fa-volume-off');
+            } else {
+                icon.classList.remove('fa-volume-off');
+                icon.classList.add('fa-volume-up');
+            }
+        }
+
+        function startGame() {
+            // 重置游戏状态
+            resetGame();
+            audioManager.playGameStart();
+            
+            // 获取当前生字列表
+            if (gameState.useCustomCharacters && gameState.customCharacters.length > 0) {
+                gameState.currentCharacters = [...gameState.customCharacters];
+            } else {
+                gameState.currentCharacters = [...characterData[gameState.selectedGrade][gameState.selectedUnit]];
+            }
+            
+            // 随机打乱生字顺序
+            gameState.currentCharacters = shuffleArray(gameState.currentCharacters);
+            
+            // 限制生字数量（最多12个）
+            if (gameState.currentCharacters.length > 12) {
+                gameState.currentCharacters = gameState.currentCharacters.slice(0, 12);
+            }
+            
+            gameState.totalPairs = gameState.currentCharacters.length;
+            
+            // 清空游戏区域
+            elements.pinyinArea.innerHTML = '';
+            elements.characterArea.innerHTML = '';
+            
+            // 创建拼音和汉字气泡
+            createPinyinBubbles();
+            createCharacterBubbles();
+            
+            // 开始计时
+            gameState.gameStarted = true;
+            gameState.startTime = Date.now();
+            gameState.timerInterval = setInterval(updateTimer, 1000);
+            
+            // 隐藏成绩统计区
+            elements.scoreSection.classList.add('hidden');
+        }
+
+        function resetGame() {
+            // 清除计时器
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+            
+            // 重置游戏状态
+            gameState.selectedPinyin = null;
+            gameState.selectedCharacter = null;
+            gameState.gameStarted = false;
+            gameState.startTime = 0;
+            gameState.endTime = 0;
+            gameState.elapsedTime = 0;
+            gameState.errorCount = 0;
+            gameState.completedPairs = 0;
+            gameState.totalPairs = 0;
+            
+            // 重置游戏区域样式
+            elements.pinyinArea.style.display = '';
+            elements.pinyinArea.style.gridTemplateColumns = '';
+            elements.pinyinArea.style.gridGap = '';
+            elements.pinyinArea.style.padding = '';
+            elements.pinyinArea.style.justifyItems = '';
+            
+            elements.characterArea.style.display = '';
+            elements.characterArea.style.gridTemplateColumns = '';
+            elements.characterArea.style.gridGap = '';
+            elements.characterArea.style.padding = '';
+            elements.characterArea.style.justifyItems = '';
+            
+            // 清空游戏区域
+            elements.pinyinArea.innerHTML = '';
+            elements.characterArea.innerHTML = '';
+            
+            // 重置UI
+            elements.gameTimer.textContent = '00:00';
+            elements.errorCount.textContent = '0';
+        }
+
+        function createPinyinBubbles() {
+            // 清空游戏区域
+            elements.pinyinArea.innerHTML = '';
+            
+            // 设置网格布局
+            elements.pinyinArea.style.display = 'grid';
+            elements.pinyinArea.style.gridTemplateColumns = 'repeat(auto-fill, minmax(100px, 1fr))';
+            elements.pinyinArea.style.gridGap = '15px';
+            elements.pinyinArea.style.padding = '15px';
+            elements.pinyinArea.style.justifyItems = 'center';
+            
+            gameState.currentCharacters.forEach((item, index) => {
+                const bubble = document.createElement('div');
+                bubble.className = 'word-bubble word-bubble-pinyin';
+                bubble.textContent = item.pinyin;
+                bubble.dataset.index = index;
+                
+                // 设置固定尺寸
+                const bubbleWidth = 100;
+                const bubbleHeight = 60;
+                
+                // 设置气泡样式
+                bubble.style.width = `${bubbleWidth}px`;
+                bubble.style.height = `${bubbleHeight}px`;
+                bubble.style.display = 'flex';
+                bubble.style.alignItems = 'center';
+                bubble.style.justifyContent = 'center';
+                bubble.style.position = 'static'; // 取消绝对定位，使用网格布局
+                
+                // 添加点击事件
+                bubble.addEventListener('click', () => handlePinyinBubbleClick(bubble));
+                
+                // 添加到拼音区域
+                elements.pinyinArea.appendChild(bubble);
+                
+                // 添加动画效果
+                setTimeout(() => {
+                    bubble.classList.add('animate-float');
+                }, index * 100);
+            });
+        }
+
+        function createCharacterBubbles() {
+            // 清空游戏区域
+            elements.characterArea.innerHTML = '';
+            
+            // 设置网格布局
+            elements.characterArea.style.display = 'grid';
+            elements.characterArea.style.gridTemplateColumns = 'repeat(auto-fill, minmax(100px, 1fr))';
+            elements.characterArea.style.gridGap = '15px';
+            elements.characterArea.style.padding = '15px';
+            elements.characterArea.style.justifyItems = 'center';
+            
+            // 先复制一份数组，然后打乱顺序
+            const shuffledCharacters = shuffleArray([...gameState.currentCharacters]);
+            
+            shuffledCharacters.forEach((item, index) => {
+                const bubble = document.createElement('div');
+                bubble.className = 'word-bubble word-bubble-character';
+                bubble.textContent = item.character;
+                bubble.dataset.index = gameState.currentCharacters.findIndex(char => char.character === item.character);
+                
+                // 设置固定尺寸
+                const bubbleWidth = 100;
+                const bubbleHeight = 60;
+                
+                // 设置气泡样式
+                bubble.style.width = `${bubbleWidth}px`;
+                bubble.style.height = `${bubbleHeight}px`;
+                bubble.style.display = 'flex';
+                bubble.style.alignItems = 'center';
+                bubble.style.justifyContent = 'center';
+                bubble.style.position = 'static'; // 取消绝对定位，使用网格布局
+                
+                // 添加点击事件
+                bubble.addEventListener('click', () => handleCharacterBubbleClick(bubble));
+                
+                // 添加到汉字区域
+                elements.characterArea.appendChild(bubble);
+                
+                // 添加动画效果
+                setTimeout(() => {
+                    bubble.classList.add('animate-float');
+                }, index * 100);
+            });
+        }
+
+        function handlePinyinBubbleClick(bubble) {
+            // 如果游戏未开始，不处理点击
+            if (!gameState.gameStarted) return;
+            
+            // 如果气泡已经被选中，不处理点击
+            if (bubble.classList.contains('opacity-50')) return;
+            
+            const index = parseInt(bubble.dataset.index);
+            
+            // 如果已经选中了一个拼音，取消之前的选择
+            if (gameState.selectedPinyin) {
+                const prevSelected = document.querySelector(`.word-bubble-pinyin[data-index="${gameState.selectedPinyin.index}"]`);
+                if (prevSelected) {
+                    prevSelected.classList.remove('word-bubble-selected');
+                }
+            }
+            
+            // 设置当前选中的拼音
+            gameState.selectedPinyin = {
+                index,
+                pinyin: gameState.currentCharacters[index].pinyin
+            };
+            
+            // 添加选中效果
+            bubble.classList.add('word-bubble-selected');
+            
+            // 如果已经选中了汉字，检查配对
+            if (gameState.selectedCharacter) {
+                checkPair();
+            }
+        }
+
+        function handleCharacterBubbleClick(bubble) {
+            // 如果游戏未开始，不处理点击
+            if (!gameState.gameStarted) return;
+            
+            // 如果气泡已经被选中，不处理点击
+            if (bubble.classList.contains('opacity-50')) return;
+            
+            const index = parseInt(bubble.dataset.index);
+            
+            // 如果已经选中了一个汉字，取消之前的选择
+            if (gameState.selectedCharacter) {
+                const prevSelected = document.querySelector(`.word-bubble-character[data-index="${gameState.selectedCharacter.index}"]`);
+                if (prevSelected) {
+                    prevSelected.classList.remove('word-bubble-selected');
+                }
+            }
+            
+            // 设置当前选中的汉字
+            gameState.selectedCharacter = {
+                index,
+                character: gameState.currentCharacters[index].character
+            };
+            
+            // 添加选中效果
+            bubble.classList.add('word-bubble-selected');
+            
+            // 如果已经选中了拼音，检查配对
+            if (gameState.selectedPinyin) {
+                checkPair();
+            }
+        }
+
+        function checkPair() {
+            // 获取选中的拼音和汉字
+            const pinyinIndex = gameState.selectedPinyin.index;
+            const characterIndex = gameState.selectedCharacter.index;
+            
+            // 获取对应的气泡元素
+            const pinyinBubble = document.querySelector(`.word-bubble-pinyin[data-index="${pinyinIndex}"]`);
+            const characterBubble = document.querySelector(`.word-bubble-character[data-index="${characterIndex}"]`);
+            
+            // 检查是否配对正确
+            if (pinyinIndex === characterIndex) {
+                // 配对正确
+                correctPair(pinyinBubble, characterBubble);
+            } else {
+                // 配对错误
+                incorrectPair(pinyinBubble, characterBubble);
+            }
+        }
+
+        function correctPair(pinyinBubble, characterBubble) {
+            audioManager.playCorrectPair();
+            // 添加消失动画
+            pinyinBubble.classList.add('animate-disappear');
+            characterBubble.classList.add('animate-disappear');
+            
+            // 禁用点击
+            pinyinBubble.style.pointerEvents = 'none';
+            characterBubble.style.pointerEvents = 'none';
+            
+            // 移除元素（在动画完成后）
+            setTimeout(() => {
+                if (pinyinBubble.parentNode) {
+                    pinyinBubble.parentNode.removeChild(pinyinBubble);
+                }
+                if (characterBubble.parentNode) {
+                    characterBubble.parentNode.removeChild(characterBubble);
+                }
+            }, 500);
+            
+            // 增加完成配对数
+            gameState.completedPairs++;
+            
+            // 重置选中状态
+            gameState.selectedPinyin = null;
+            gameState.selectedCharacter = null;
+            
+            // 检查游戏是否完成
+            if (gameState.completedPairs === gameState.totalPairs) {
+                // 游戏完成
+                endGame();
+            }
+        }
+
+        function incorrectPair(pinyinBubble, characterBubble) {
+            audioManager.playWrongPair();
+            // 增加错误次数
+            gameState.errorCount++;
+            elements.errorCount.textContent = gameState.errorCount;
+            
+            // 添加震动效果
+            pinyinBubble.classList.add('animate-shake');
+            characterBubble.classList.add('animate-shake');
+            
+            // 移除选中效果
+            setTimeout(() => {
+                pinyinBubble.classList.remove('word-bubble-selected', 'animate-shake');
+                characterBubble.classList.remove('word-bubble-selected', 'animate-shake');
+                
+                // 重置选中状态
+                gameState.selectedPinyin = null;
+                gameState.selectedCharacter = null;
+            }, 500);
+        }
+
+        function updateTimer() {
+            if (!gameState.gameStarted) return;
+            
+            gameState.elapsedTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const minutes = Math.floor(gameState.elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (gameState.elapsedTime % 60).toString().padStart(2, '0');
+            
+            elements.gameTimer.textContent = `${minutes}:${seconds}`;
+        }
+
+        function endGame() {
+            // 更新游戏状态
+            gameState.gameStarted = false;
+            gameState.endTime = Date.now();
+            
+            // 清除计时器
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+            
+            // 计算成绩
+            const minutes = Math.floor(gameState.elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (gameState.elapsedTime % 60).toString().padStart(2, '0');
+            const formattedTime = `${minutes}:${seconds}`;
+            const totalAttempts = gameState.completedPairs + gameState.errorCount;
+            const accuracy = Math.round((gameState.completedPairs / totalAttempts) * 100);
+            
+            // 更新成绩统计区
+            elements.finalErrorCount.textContent = gameState.errorCount;
+            elements.finalCompletionTime.textContent = formattedTime;
+            elements.finalAccuracyRate.textContent = `${accuracy}%`;
+            
+            // 显示成绩统计区
+            elements.scoreSection.classList.remove('hidden');
+            
+            // 更新游戏完成模态框
+            elements.resultTime.textContent = formattedTime;
+            elements.resultErrors.textContent = gameState.errorCount;
+            elements.resultAccuracy.textContent = `${accuracy}%`;
+            
+            // 设置评价
+            setGameRating(accuracy, gameState.errorCount, gameState.elapsedTime);
+            
+            // 播放游戏完成音效
+            audioManager.playGameComplete();
+            
+            // 显示游戏完成模态框
+            setTimeout(() => {
+                elements.gameCompleteModal.classList.remove('hidden');
+            }, 1000);
+        }
+
+        function setGameRating(accuracy, errors, time) {
+            let rating = '';
+            let comment = '';
+            
+            if (accuracy === 100 && errors === 0 && time < 30) {
+                rating = '太棒了！';
+                comment = '你是生字配对高手！继续保持！';
+            } else if (accuracy >= 90 && errors <= 2) {
+                rating = '非常好！';
+                comment = '你的拼音和汉字配对能力很强！';
+            } else if (accuracy >= 80 && errors <= 5) {
+                rating = '不错！';
+                comment = '继续练习，你会做得更好！';
+            } else if (accuracy >= 70) {
+                rating = '加油！';
+                comment = '多练习可以提高你的拼音和汉字配对能力！';
+            } else {
+                rating = '继续努力！';
+                comment = '建议你多复习拼音和汉字，相信你会进步的！';
+            }
+            
+            elements.gameRating.textContent = rating;
+            elements.gameComment.textContent = comment;
+        }
+
+        // 辅助函数
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
